@@ -49,9 +49,11 @@ const teleport = (i) => page.evaluate((i) => {
   const { car, track } = window.__game; const p = track.points[i], t = track.tangents[i];
   car.x = p.x; car.z = p.z; car.heading = Math.atan2(t.x, t.z); car.vx = t.x * 30; car.vz = t.z * 30; car.lastIndex = undefined;
 }, i);
+// wartet, bis das Spiel das Auto an der Zielstelle verarbeitet hat (statt fester Zeit)
+const reached = (i) => page.waitForFunction((i) => Math.abs(window.__game.car.trackIndex - i) < 6, i, { timeout: 15000 });
 await page.keyboard.down('ArrowUp');
 await page.waitForTimeout(300);
-for (const i of [200, 400, 600]) { await teleport(i); await page.waitForTimeout(150); }
+for (const i of [200, 400, 600]) { await teleport(i); await reached(i); }
 await teleport(792);
 await page.waitForFunction(() => window.__game.laps.lapsDone >= 1, null, { timeout: 15000 });
 const keys = await page.evaluate(() => ({ s: localStorage.getItem('racing-lab.bestLap.serpentine'), n: localStorage.getItem('racing-lab.bestLap') }));

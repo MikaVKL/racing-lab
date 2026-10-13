@@ -25,6 +25,10 @@ const teleport = (i, v = 30) => page.evaluate(([i, v]) => {
   car.vx = t.x * v; car.vz = t.z * v; car.lastIndex = undefined;
 }, [i, v]);
 
+
+// wartet, bis das Spiel das Auto an der Zielstelle verarbeitet hat (statt fester Zeit)
+const reached = (i) => page.waitForFunction((i) => Math.abs(window.__game.car.trackIndex - i) < 6, i, { timeout: 15000 });
+
 check('Zeit läuft vor dem Start nicht', !(await laps()).running);
 await page.keyboard.down('ArrowUp'); // Rennen starten
 await page.waitForTimeout(300);
@@ -35,7 +39,7 @@ await teleport(792); await page.waitForTimeout(1200);
 check('Ohne Checkpoints keine Runde', (await laps()).done === 0, await laps());
 
 // Gültige Runde über alle Checkpoints
-for (const i of [200, 400, 600]) { await teleport(i); await page.waitForTimeout(150); }
+for (const i of [200, 400, 600]) { await teleport(i); await reached(i); }
 await teleport(792); await page.waitForTimeout(1200);
 const a = await laps();
 check('Gültige Runde wird gezählt', a.done === 1 && a.last > 0, a);
@@ -45,7 +49,7 @@ check('Bestzeit im localStorage', Number(stored) === a.best, stored);
 
 // Zweite, langsamere Runde: Bestzeit bleibt
 await page.waitForTimeout(1500);
-for (const i of [200, 400, 600]) { await teleport(i); await page.waitForTimeout(150); }
+for (const i of [200, 400, 600]) { await teleport(i); await reached(i); }
 await teleport(792); await page.waitForTimeout(1200);
 const b = await laps();
 check('Zweite Runde gezählt', b.done === 2, b);
