@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Controls } from './input';
-import { TRACK_WIDTH, type Track } from './track';
+import type { Track } from './track';
 
 // Fahrphysik-Parameter (Einheiten: Meter, Sekunden)
 const ACCEL = 30;          // Vortrieb
@@ -72,7 +72,7 @@ export class Car {
     const q = this.track.query(this.x, this.z, this.lastIndex);
     this.lastIndex = q.index;
     this.trackIndex = q.index;
-    this.offTrack = q.distance > TRACK_WIDTH / 2 + CAR_HALF_WIDTH;
+    this.offTrack = q.distance > this.track.width / 2 + CAR_HALF_WIDTH;
     if (this.offTrack) {
       const k = Math.exp(-OFFTRACK_DRAG * dt);
       vf *= k; vr *= k;
@@ -111,7 +111,7 @@ export class Car {
   }
 }
 
-function buildCarModel(): THREE.Group {
+export function buildCarModel(): THREE.Group {
   const g = new THREE.Group();
   const darkMat = new THREE.MeshBasicMaterial({ color: 0x0a0c20 });
   const edgeCyan = new THREE.LineBasicMaterial({ color: 0x00ffe1 });

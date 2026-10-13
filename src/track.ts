@@ -1,15 +1,7 @@
 import * as THREE from 'three';
+import type { TrackDef } from './tracks';
 
-export const TRACK_WIDTH = 18;
-const SCALE = 1.5; // Streckengröße relativ zu den Kontrollpunkten
 export const SAMPLES = 800;
-
-// Kontrollpunkte (x, z) der geschlossenen Strecke – Start/Ziel liegt auf der Geraden bei Punkt 0.
-const CONTROL: [number, number][] = [
-  [0, 0], [60, 0], [120, -10], [165, -50], [160, -110], [110, -140],
-  [60, -120], [30, -150], [-20, -185], [-80, -170], [-105, -120],
-  [-80, -70], [-110, -30], [-70, 15], [-30, 10],
-];
 
 export interface TrackQuery {
   /** Index der nächstgelegenen Stützstelle */
@@ -27,10 +19,12 @@ export class Track {
   readonly tangents: THREE.Vector3[];
   readonly length: number;
   readonly group = new THREE.Group();
+  readonly width: number;
 
-  constructor() {
+  constructor(private def: TrackDef) {
+    this.width = def.width;
     const curve = new THREE.CatmullRomCurve3(
-      CONTROL.map(([x, z]) => new THREE.Vector3(x * SCALE, 0, z * SCALE)),
+      def.control.map(([x, z]) => new THREE.Vector3(x * def.scale, 0, z * def.scale)),
       true,
       'catmullrom',
       0.5,
@@ -77,7 +71,8 @@ export class Track {
   }
 
   private buildMeshes() {
-    const half = TRACK_WIDTH / 2;
+    const half = this.width / 2;
+    const def = this.def;
     const edge = 0.5; // Breite der Neon-Randlinien
 
     const ribbon = (offsetIn: number, offsetOut: number, y: number, material: THREE.Material) => {
@@ -107,8 +102,8 @@ export class Track {
     this.group.add(ribbon(-half, half, 0.02, asphalt));
 
     // Neon-Ränder: links magenta, rechts cyan
-    const magenta = new THREE.MeshBasicMaterial({ color: 0xff2bd6, side: THREE.DoubleSide });
-    const cyan = new THREE.MeshBasicMaterial({ color: 0x00ffe1, side: THREE.DoubleSide });
+    const magenta = new THREE.MeshBasicMaterial({ color: def.edgeLeft, side: THREE.DoubleSide });
+    const cyan = new THREE.MeshBasicMaterial({ color: def.edgeRight, side: THREE.DoubleSide });
     this.group.add(ribbon(half - edge, half, 0.05, magenta));
     this.group.add(ribbon(-half, -half + edge, 0.05, cyan));
 
@@ -127,7 +122,7 @@ export class Track {
 
     // Start/Ziel-Linie (Schachbrett)
     const s = this.start;
-    const rows = 2, cols = 8, cell = TRACK_WIDTH / cols;
+    const rows = 2, cols = 8, cell = this.width / cols;
     const dark = new THREE.MeshBasicMaterial({ color: 0x05060f });
     const light = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const n0 = this.normal(0);
@@ -153,8 +148,8 @@ export class Track {
     this.group.add(grid);
 
     // Low-Poly-Kulisse: Neon-Pylonen neben der Strecke
-    const rng = mulberry32(7);
-    const colors = [0xff2bd6, 0x00ffe1, 0x7a5cff, 0xffd23f];
+    const rng = mulberry32(def.seed);
+    const colors = def.accents;
     for (let i = 0; i < 110; i++) {
       const k = Math.floor(rng() * SAMPLES);
       const side = rng() < 0.5 ? -1 : 1;

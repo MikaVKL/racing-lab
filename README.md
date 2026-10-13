@@ -11,9 +11,11 @@ Einfaches 3D-Rennspiel im Browser (Three.js + Vite + TypeScript, ohne Server) in
 | ← → / A D | Lenken |
 | Leertaste | Handbremse (mehr Rutschen) |
 | R | Neustart |
+| T | nächste Strecke (wird gespeichert) |
+| M | Ton an/aus (wird gespeichert) |
 
 Die Zeit startet mit dem ersten Gasgeben. Eine Runde zählt nur, wenn alle drei Checkpoints durchfahren wurden.
-Die Bestzeit wird im `localStorage` des Browsers gespeichert.
+Es gibt zwei Strecken (*Neon Lab*, *Serpentine*), per Taste **T** oder `?track=serpentine` wählbar. Die Bestzeit und das Geisterauto (je Strecke) der Bestrunde werden im `localStorage` des Browsers gespeichert. In den folgenden Runden fährt das Geisterauto (durchsichtig) die Bestrunde nach.
 
 ## Entwicklung
 
@@ -33,7 +35,11 @@ npm test
 
 - `tests/drive.mjs` – Gas, Lenken, Rutschen, Bremsen, Reset
 - `tests/laps.mjs` – Rundenzählung, Checkpoints, Bestzeit, Persistenz
-- `tests/lap-bot.mjs` – ein Bot fährt per Tastatur eine komplette Runde
+- `tests/effects.mjs` – Driftspuren und Qualm
+- `tests/sound.mjs` – Motorsound, Gänge, Stummschalten
+- `tests/ghost.mjs` – Geisterauto: Aufzeichnung, Wiedergabe, Speicherung
+- `tests/tracks.mjs` – Streckenauswahl, getrennte Bestzeiten
+- `tests/lap-bot.mjs [url]` – ein Bot fährt per Tastatur eine komplette Runde
 - `tests/smoke.mjs` / `tests/camera.mjs` – Screenshots
 
 Eigenen Chromium-Pfad setzen mit `CHROMIUM_PATH=...`.
