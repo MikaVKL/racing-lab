@@ -7,6 +7,7 @@ import { LapTimer } from './laps';
 import { Hud } from './hud';
 import { Effects } from './effects';
 import { Sound } from './audio';
+import { Ghost } from './ghost';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -31,6 +32,10 @@ const effects = new Effects();
 scene.add(effects.group);
 
 const laps = new LapTimer(SAMPLES);
+const ghost = new Ghost();
+ghost.validateAgainst(laps.bestLap);
+scene.add(ghost.mesh);
+let serial = laps.lapSerial;
 const hud = new Hud();
 const chase = new ChaseCamera(camera);
 chase.snap(car);
@@ -61,20 +66,26 @@ renderer.setAnimationLoop((now) => {
   acc += frameDt;
   while (acc >= STEP) {
     controls = input.read();
-    if (controls.reset) { car.reset(); effects.clear(); laps.reset(); chase.snap(car); hud.showBanner('Gas geben zum Start!', 1e9); }
+    if (controls.reset) { car.reset(); effects.clear(); laps.reset(); ghost.beginLap(); chase.snap(car); hud.showBanner('Gas geben zum Start!', 1e9); }
     if (!laps.running && (controls.throttle || controls.brake)) { laps.start(); hud.hideBanner(); }
     car.update(controls, STEP);
     effects.update(car, controls.throttle, controls.brake, controls.handbrake, STEP);
     const before = laps.lapsDone;
     laps.update(car.trackIndex, STEP);
-    if (laps.lapsDone > before) hud.lapCompleted(laps);
+    if (laps.running) ghost.record(laps.currentLap, car.x, car.z, car.heading);
+    if (laps.lapsDone > before) {
+      hud.lapCompleted(laps);
+      if (laps.newBest && laps.lastLap !== null) ghost.commit(laps.lastLap);
+    }
+    if (laps.lapSerial !== serial) { serial = laps.lapSerial; ghost.beginLap(); }
     acc -= STEP;
   }
   chase.update(car, frameDt);
   sound.update(car.speed, controls.throttle, effects.skidding, car.offTrack);
+  ghost.show(laps.currentLap, laps.running);
   hud.update(car.speed, laps);
   renderer.render(scene, camera);
 });
 
 // Für automatisierte Tests im Browser
-(window as unknown as { __game: unknown }).__game = { car, track, laps, effects, sound };
+(window as unknown as { __game: unknown }).__game = { car, track, laps, effects, sound, ghost };

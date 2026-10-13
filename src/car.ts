@@ -111,7 +111,7 @@ export class Car {
   }
 }
 
-function buildCarModel(): THREE.Group {
+export function buildCarModel(): THREE.Group {
   const g = new THREE.Group();
   const darkMat = new THREE.MeshBasicMaterial({ color: 0x0a0c20 });
   const edgeCyan = new THREE.LineBasicMaterial({ color: 0x00ffe1 });

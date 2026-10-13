@@ -32,6 +32,8 @@ export class LapTimer {
   /** true, wenn die letzte Runde eine neue Bestzeit war */
   newBest = false;
   running = false;
+  /** zählt hoch, sobald eine neue Runde beginnt (Start oder Überfahren der Ziellinie) */
+  lapSerial = 0;
   private clock = 0;       // Simulationszeit in s, solange das Rennen läuft
   private lapStart = 0;
   private nextCp = 1;
@@ -42,7 +44,7 @@ export class LapTimer {
   get currentLap() { return this.running ? this.clock - this.lapStart : 0; }
 
   /** Zeit läuft ab dem ersten Gasgeben */
-  start() { this.running = true; }
+  start() { this.running = true; this.lapSerial++; }
 
   /** Zurück an den Start (Runden und Bestzeit bleiben erhalten; Bestzeit liegt im Speicher) */
   reset() {
@@ -77,6 +79,7 @@ export class LapTimer {
       }
       this.lapStart = this.clock;
       this.nextCp = 1;
+      if (this.running) this.lapSerial++;
     }
   }
 }
