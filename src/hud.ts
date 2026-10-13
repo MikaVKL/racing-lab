@@ -37,7 +37,7 @@ export class Hud {
         <div><b>BEST</b> <span id="h-best">--:--.---</span></div>
       </div>
       <div class="box br"><div class="num" id="h-speed">0</div><div class="unit">KM/H</div></div>
-      <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Handbremse · R Neustart · T Strecke · M <span id="h-mute">Ton an</span></div>
+      <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Handbremse · R Neustart · P Pause · T Strecke · M <span id="h-mute">Ton an</span></div>
       <div class="box banner" id="h-banner" style="opacity:0"></div>`;
     document.body.appendChild(root);
 
@@ -45,13 +45,14 @@ export class Hud {
     q('h-track').textContent = trackName;
     this.speed = q('h-speed'); this.lap = q('h-lap'); this.cur = q('h-cur');
     this.last = q('h-last'); this.best = q('h-best'); this.banner = q('h-banner'); this.mute = q('h-mute');
-    this.showBanner('Gas geben zum Start!', 1e9);
   }
 
   setMuted(muted: boolean) { this.mute.textContent = muted ? 'Ton aus' : 'Ton an'; }
 
-  showBanner(text: string, ms = 3000) {
+  showBanner(text: string, ms = 3000, big = false) {
     this.banner.textContent = text;
+    this.banner.style.fontSize = big ? '72px' : '28px';
+    this.banner.style.whiteSpace = 'pre-line';
     this.banner.style.opacity = '1';
     this.bannerUntil = performance.now() + ms;
   }

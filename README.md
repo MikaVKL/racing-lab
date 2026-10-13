@@ -10,11 +10,12 @@ Einfaches 3D-Rennspiel im Browser (Three.js + Vite + TypeScript, ohne Server) in
 | ↓ / S | Bremse / Rückwärts |
 | ← → / A D | Lenken |
 | Leertaste | Handbremse (mehr Rutschen) |
-| R | Neustart |
+| R | Neustart (mit Countdown) |
+| P / Esc | Pause (auch automatisch beim Tab-Wechsel) |
 | T | nächste Strecke (wird gespeichert) |
 | M | Ton an/aus (wird gespeichert) |
 
-Die Zeit startet mit dem ersten Gasgeben. Eine Runde zählt nur, wenn alle drei Checkpoints durchfahren wurden.
+Nach dem Countdown (3, 2, 1, GO!) startet die Zeit. Eine Runde zählt nur, wenn alle drei Checkpoints durchfahren wurden.
 Es gibt zwei Strecken (*Neon Lab*, *Serpentine*), per Taste **T** oder `?track=serpentine` wählbar. Die Bestzeit und das Geisterauto (je Strecke) der Bestrunde werden im `localStorage` des Browsers gespeichert. In den folgenden Runden fährt das Geisterauto (durchsichtig) die Bestrunde nach.
 
 ## Entwicklung
@@ -33,6 +34,7 @@ Bei laufendem `npm run dev`:
 npm test
 ```
 
+- `tests/countdown.mjs` – Countdown, Pause, Neustart
 - `tests/drive.mjs` – Gas, Lenken, Rutschen, Bremsen, Reset
 - `tests/laps.mjs` – Rundenzählung, Checkpoints, Bestzeit, Persistenz
 - `tests/effects.mjs` – Driftspuren und Qualm
@@ -41,6 +43,8 @@ npm test
 - `tests/tracks.mjs` – Streckenauswahl, getrennte Bestzeiten
 - `tests/lap-bot.mjs [url]` – ein Bot fährt per Tastatur eine komplette Runde
 - `tests/smoke.mjs` / `tests/camera.mjs` – Screenshots
+
+Die Tests setzen `window.__NO_COUNTDOWN` und starten damit ohne Countdown (Zeit startet beim ersten Gasgeben); nur `countdown.mjs` testet den echten Ablauf.
 
 Eigenen Chromium-Pfad setzen mit `CHROMIUM_PATH=...`.
 

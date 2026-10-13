@@ -7,6 +7,7 @@ const browser = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
 const page = await browser.newPage({ viewport: { width: 1000, height: 600 } });
+await page.addInitScript(() => { window.__NO_COUNTDOWN = true; }); // Tests starten ohne Countdown
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
@@ -31,7 +32,7 @@ check('Geradeaus keine Spuren', a.marks === 0 && !a.skid, a);
 // 2) Driften: Spuren und Qualm
 await teleport(10, 40);
 await page.keyboard.down('ArrowLeft');
-await page.waitForTimeout(500);
+await page.waitForFunction(() => window.__game.effects.marksPlaced > 0 && window.__game.effects.smokeActive > 0, null, { timeout: 8000 }).catch(() => {});
 const b = await fx();
 check('Driften setzt Spuren', b.marks > 0, b);
 check('Driften erzeugt Qualm', b.smoke > 0, b);
@@ -46,7 +47,7 @@ const afterReset = await fx();
 check('R löscht Spuren', afterReset.marks === 0 && afterReset.smoke === 0, afterReset);
 await teleport(10, 45);
 await page.keyboard.down('ArrowDown');
-await page.waitForTimeout(500);
+await page.waitForFunction(() => window.__game.effects.marksPlaced > 0, null, { timeout: 8000 }).catch(() => {});
 const c = await fx();
 check('Bremsen setzt Spuren', c.marks > 0, c);
 await page.keyboard.up('ArrowDown');
@@ -58,7 +59,7 @@ await page.waitForTimeout(200);
 await teleport(10, 30);
 await page.keyboard.down('Space');
 await page.keyboard.down('ArrowLeft');
-await page.waitForTimeout(400);
+await page.waitForFunction(() => window.__game.effects.marksPlaced > 0, null, { timeout: 8000 }).catch(() => {});
 const d = await fx();
 check('Handbremse setzt Spuren', d.marks > 0, d);
 

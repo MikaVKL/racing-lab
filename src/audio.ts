@@ -78,6 +78,12 @@ export class Sound {
     noise.start();
   }
 
+  /** Pause: Audio-Kontext anhalten bzw. fortsetzen */
+  setPaused(paused: boolean) {
+    if (!this.ctx) return;
+    if (paused) void this.ctx.suspend(); else void this.ctx.resume();
+  }
+
   toggleMute(): boolean {
     this.muted = !this.muted;
     try { localStorage.setItem(STORAGE_KEY, this.muted ? '1' : '0'); } catch { /* ignorieren */ }

@@ -66,31 +66,70 @@ addEventListener('resize', () => {
 
 // Feste Physik-Schrittweite, unabhängig von der Bildrate
 const STEP = 1 / 120;
+const COUNTDOWN_SECONDS = 3;
+// Testhook: ohne Countdown, Zeit startet mit dem ersten Gasgeben (wie in den Schritten 1–10)
+const legacyStart = (window as unknown as { __NO_COUNTDOWN?: boolean }).__NO_COUNTDOWN === true;
 let acc = 0;
 let controls = input.read();
 let last = performance.now();
+let countdownLeft = 0;
+let shownCount = -1;
+let paused = false;
+
+function beginRace() {
+  car.reset(); effects.clear(); laps.reset(); ghost.beginLap(); chase.snap(car);
+  if (legacyStart) { countdownLeft = 0; hud.showBanner('Gas geben zum Start!', 1e9); return; }
+  countdownLeft = COUNTDOWN_SECONDS;
+  shownCount = -1;
+}
+
+function setPaused(p: boolean) {
+  if (paused === p) return;
+  paused = p;
+  sound.setPaused(p);
+  if (p) hud.showBanner('PAUSE\nP oder Esc zum Fortsetzen', 1e9);
+  else { input.read(); hud.hideBanner(); shownCount = -1; last = performance.now(); } // Tasten aus der Pause verwerfen
+}
+
+addEventListener('keydown', (e) => {
+  if ((e.code === 'KeyP' || e.code === 'Escape') && !e.repeat) setPaused(!paused);
+});
+// Tab-Wechsel oder Fenster verloren: automatisch pausieren (Zeitnahme läuft sonst weiter)
+document.addEventListener('visibilitychange', () => { if (document.hidden) setPaused(true); });
+
+beginRace();
 
 renderer.setAnimationLoop((now) => {
   const frameDt = Math.min((now - last) / 1000, 0.1);
   last = now;
-  acc += frameDt;
+  if (paused) input.read(); // Tasten während der Pause verwerfen (z. B. R)
+  else acc += frameDt;
   while (acc >= STEP) {
     controls = input.read();
-    if (controls.reset) { car.reset(); effects.clear(); laps.reset(); ghost.beginLap(); chase.snap(car); hud.showBanner('Gas geben zum Start!', 1e9); }
-    if (!laps.running && (controls.throttle || controls.brake)) { laps.start(); hud.hideBanner(); }
-    car.update(controls, STEP);
-    effects.update(car, controls.throttle, controls.brake, controls.handbrake, STEP);
-    const before = laps.lapsDone;
-    laps.update(car.trackIndex, STEP);
-    if (laps.running) ghost.record(laps.currentLap, car.x, car.z, car.heading);
-    if (laps.lapsDone > before) {
-      hud.lapCompleted(laps);
-      if (laps.newBest && laps.lastLap !== null) ghost.commit(laps.lastLap);
+    if (controls.reset) beginRace();
+
+    if (countdownLeft > 0) {
+      // Auto steht, bis der Countdown abgelaufen ist
+      countdownLeft -= STEP;
+      const n = Math.ceil(countdownLeft);
+      if (countdownLeft > 0 && n !== shownCount) { shownCount = n; hud.showBanner(String(n), 1e9, true); }
+      if (countdownLeft <= 0) { laps.start(); hud.showBanner('GO!', 900, true); }
+    } else {
+      if (legacyStart && !laps.running && (controls.throttle || controls.brake)) { laps.start(); hud.hideBanner(); }
+      car.update(controls, STEP);
+      effects.update(car, controls.throttle, controls.brake, controls.handbrake, STEP);
+      const before = laps.lapsDone;
+      laps.update(car.trackIndex, STEP);
+      if (laps.running) ghost.record(laps.currentLap, car.x, car.z, car.heading);
+      if (laps.lapsDone > before) {
+        hud.lapCompleted(laps);
+        if (laps.newBest && laps.lastLap !== null) ghost.commit(laps.lastLap);
+      }
     }
     if (laps.lapSerial !== serial) { serial = laps.lapSerial; ghost.beginLap(); }
     acc -= STEP;
   }
-  chase.update(car, frameDt);
+  if (!paused) chase.update(car, frameDt);
   sound.update(car.speed, controls.throttle, effects.skidding, car.offTrack);
   ghost.show(laps.currentLap, laps.running);
   hud.update(car.speed, laps);
@@ -98,4 +137,4 @@ renderer.setAnimationLoop((now) => {
 });
 
 // Für automatisierte Tests im Browser
-(window as unknown as { __game: unknown }).__game = { car, track, laps, effects, sound, ghost, trackDef };
+(window as unknown as { __game: unknown }).__game = { car, track, laps, effects, sound, ghost, trackDef, state: () => ({ countdownLeft, paused }) };
