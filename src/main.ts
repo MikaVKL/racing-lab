@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Track } from './track';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -7,16 +8,16 @@ document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05060f);
+scene.fog = new THREE.Fog(0x05060f, 150, 600);
 
-const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 1000);
-camera.position.set(3, 3, 6);
-camera.lookAt(0, 0, 0);
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.1, 1500);
 
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1, 1),
-  new THREE.MeshBasicMaterial({ color: 0x00ffe1, wireframe: true }),
-);
-scene.add(cube);
+const track = new Track();
+scene.add(track.group);
+
+// Vorläufige Übersichtskamera (wird in Schritt 4 durch die Verfolgerkamera ersetzt)
+camera.position.set(0, 300, -60);
+camera.lookAt(0, 0, -75);
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
@@ -24,7 +25,4 @@ addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
-renderer.setAnimationLoop(() => {
-  cube.rotation.y += 0.01;
-  renderer.render(scene, camera);
-});
+renderer.setAnimationLoop(() => renderer.render(scene, camera));
