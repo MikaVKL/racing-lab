@@ -25,7 +25,10 @@ export class Car {
   /** Slip-Winkel-Maß: Querkomponente der Geschwindigkeit */
   slip = 0;
   offTrack = false;
+  /** Index der nächsten Streckenstützstelle (für Rundenzählung) */
+  trackIndex = 0;
   private body: THREE.Group;
+  private lastIndex: number | undefined;
 
   constructor(private track: Track) {
     this.body = buildCarModel();
@@ -43,6 +46,7 @@ export class Car {
     this.vx = this.vz = 0;
     this.steer = 0;
     this.slip = 0;
+    this.lastIndex = undefined; // volle Suche nach dem Teleport
     this.syncMesh(0);
   }
 
@@ -67,6 +71,7 @@ export class Car {
     // Offroad-Bremsung
     const q = this.track.query(this.x, this.z, this.lastIndex);
     this.lastIndex = q.index;
+    this.trackIndex = q.index;
     this.offTrack = q.distance > 8 + CAR_HALF_WIDTH;
     if (this.offTrack) {
       const k = Math.exp(-OFFTRACK_DRAG * dt);
@@ -94,7 +99,6 @@ export class Car {
     this.syncMesh(dt);
   }
 
-  private lastIndex: number | undefined;
   private roll = 0;
 
   private syncMesh(dt: number) {

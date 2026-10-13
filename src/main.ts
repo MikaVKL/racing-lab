@@ -1,8 +1,10 @@
 import * as THREE from 'three';
-import { Track } from './track';
+import { Track, SAMPLES } from './track';
 import { Car } from './car';
 import { Input } from './input';
 import { ChaseCamera } from './chaseCamera';
+import { LapTimer } from './laps';
+import { Hud } from './hud';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -23,6 +25,8 @@ scene.add(car.mesh);
 
 const input = new Input();
 
+const laps = new LapTimer(SAMPLES);
+const hud = new Hud();
 const chase = new ChaseCamera(camera);
 chase.snap(car);
 
@@ -43,13 +47,18 @@ renderer.setAnimationLoop((now) => {
   acc += frameDt;
   while (acc >= STEP) {
     const controls = input.read();
-    if (controls.reset) { car.reset(); chase.snap(car); }
+    if (controls.reset) { car.reset(); laps.reset(); chase.snap(car); hud.showBanner('Gas geben zum Start!', 1e9); }
+    if (!laps.running && (controls.throttle || controls.brake)) { laps.start(); hud.hideBanner(); }
     car.update(controls, STEP);
+    const before = laps.lapsDone;
+    laps.update(car.trackIndex, STEP);
+    if (laps.lapsDone > before) hud.lapCompleted(laps);
     acc -= STEP;
   }
   chase.update(car, frameDt);
+  hud.update(car.speed, laps);
   renderer.render(scene, camera);
 });
 
 // Für automatisierte Tests im Browser
-(window as unknown as { __game: unknown }).__game = { car, track };
+(window as unknown as { __game: unknown }).__game = { car, track, laps };

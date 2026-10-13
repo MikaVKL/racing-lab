@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export const TRACK_WIDTH = 16;
-const SAMPLES = 800;
+export const SAMPLES = 800;
 
 // Kontrollpunkte (x, z) der geschlossenen Strecke – Start/Ziel liegt auf der Geraden bei Punkt 0.
 const CONTROL: [number, number][] = [
