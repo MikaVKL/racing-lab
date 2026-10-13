@@ -1,10 +1,7 @@
 // Motorsound (WebAudio): Start nach Taste, Drehzahl/Gänge, Stummschalten mit M, Persistenz
-import { chromium } from 'playwright';
+import { launchBrowser } from './launch.mjs';
 const url = process.argv[2] ?? 'http://localhost:5173/';
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'],
-});
+const browser = await launchBrowser(['--autoplay-policy=no-user-gesture-required']);
 const page = await browser.newPage({ viewport: { width: 800, height: 500 } });
 await page.addInitScript(() => { window.__NO_COUNTDOWN = true; }); // Tests starten ohne Countdown
 const errors = [];

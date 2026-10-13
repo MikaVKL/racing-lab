@@ -1,11 +1,8 @@
 // End-to-End: Ein Bot fährt per Tastatur-Events eine komplette Runde (ohne Teleport).
-import { chromium } from 'playwright';
+import { launchBrowser } from './launch.mjs';
 
 const url = process.argv[2] ?? 'http://localhost:5173/';
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
-});
+const browser = await launchBrowser();
 const page = await browser.newPage({ viewport: { width: 640, height: 400 } });
 await page.addInitScript(() => { window.__NO_COUNTDOWN = true; }); // Tests starten ohne Countdown
 const errors = [];

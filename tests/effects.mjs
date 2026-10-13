@@ -1,11 +1,8 @@
 // Driftspuren und Reifenqualm im laufenden Spiel
-import { chromium } from 'playwright';
+import { launchBrowser } from './launch.mjs';
 const url = process.argv[2] ?? 'http://localhost:5173/';
 const shot = process.argv[3] ?? 'effects.png';
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
-});
+const browser = await launchBrowser();
 const page = await browser.newPage({ viewport: { width: 1000, height: 600 } });
 await page.addInitScript(() => { window.__NO_COUNTDOWN = true; }); // Tests starten ohne Countdown
 const errors = [];

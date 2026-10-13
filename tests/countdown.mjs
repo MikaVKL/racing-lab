@@ -1,11 +1,8 @@
 // Countdown, GO!, Pause und Neustart (ohne Testhook – so wie es Spieler erleben)
-import { chromium } from 'playwright';
+import { launchBrowser } from './launch.mjs';
 const url = process.argv[2] ?? 'http://localhost:5173/';
 const shot = process.argv[3] ?? 'countdown.png';
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
-});
+const browser = await launchBrowser();
 const page = await browser.newPage({ viewport: { width: 900, height: 560 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));

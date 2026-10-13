@@ -1,11 +1,8 @@
 // Streckenauswahl: URL-Parameter, Taste T, Persistenz, getrennte Bestzeiten
-import { chromium } from 'playwright';
+import { launchBrowser } from './launch.mjs';
 const base = (process.argv[2] ?? 'http://localhost:5173/').replace(/\?.*$/, '');
 const shot = process.argv[3] ?? 'track2.png';
-const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
-});
+const browser = await launchBrowser();
 const page = await browser.newPage({ viewport: { width: 900, height: 560 } });
 await page.addInitScript(() => { window.__NO_COUNTDOWN = true; }); // Tests starten ohne Countdown
 const errors = [];

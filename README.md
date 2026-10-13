@@ -47,7 +47,9 @@ npm test
 
 Die Tests setzen `window.__NO_COUNTDOWN` und starten damit ohne Countdown (Zeit startet beim ersten Gasgeben); nur `countdown.mjs` testet den echten Ablauf.
 
-Eigenen Chromium-Pfad setzen mit `CHROMIUM_PATH=...`.
+Eigenen Chromium-Pfad setzen mit `CHROMIUM_PATH=...` (Standard: `tests/launch.mjs`).
+
+Der Workflow `.github/workflows/test.yml` führt `npm test` bei jedem Pull Request und bei Pushes auf `claude/**` aus.
 
 ## Deployment (GitHub Pages)
 
