@@ -3,3 +3,6 @@ dist
 *.log
 screenshot*.png
 laps.png
+effects.png
+*.png
+!docs/*.png
