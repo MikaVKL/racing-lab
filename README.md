@@ -16,7 +16,7 @@ Einfaches 3D-Rennspiel im Browser (Three.js + Vite + TypeScript, ohne Server) in
 | M | Ton an/aus (wird gespeichert) |
 
 Nach dem Countdown (3, 2, 1, GO!) startet die Zeit. Eine Runde zählt nur, wenn alle drei Checkpoints durchfahren wurden.
-Es gibt zwei Strecken (*Neon Lab*, *Serpentine*), per Taste **T** oder `?track=serpentine` wählbar. Die Bestzeit und das Geisterauto (je Strecke) der Bestrunde werden im `localStorage` des Browsers gespeichert. In den folgenden Runden fährt das Geisterauto (durchsichtig) die Bestrunde nach.
+Oben rechts zeigt eine Minikarte Strecke, Auto und Geisterauto; fährst du gegen die Streckenrichtung, erscheint eine Warnung. Es gibt zwei Strecken (*Neon Lab*, *Serpentine*), per Taste **T** oder `?track=serpentine` wählbar. Die Bestzeit und das Geisterauto (je Strecke) der Bestrunde werden im `localStorage` des Browsers gespeichert. In den folgenden Runden fährt das Geisterauto (durchsichtig) die Bestrunde nach.
 
 ## Entwicklung
 
@@ -35,6 +35,7 @@ npm test
 ```
 
 - `tests/countdown.mjs` – Countdown, Pause, Neustart
+- `tests/hud-extras.mjs` – Warnung „Falsche Richtung“, Minikarte
 - `tests/drive.mjs` – Gas, Lenken, Rutschen, Bremsen, Reset
 - `tests/laps.mjs` – Rundenzählung, Checkpoints, Bestzeit, Persistenz
 - `tests/effects.mjs` – Driftspuren und Qualm

@@ -8,6 +8,7 @@ export class Hud {
   private best: HTMLElement;
   private banner: HTMLElement;
   private mute: HTMLElement;
+  private wrong: HTMLElement;
   private bannerUntil = 0;
 
   constructor(trackName: string) {
@@ -22,6 +23,8 @@ export class Hud {
       #hud .br .num { font-size: 52px; line-height: 1; color: #fff; text-shadow: 0 0 12px #00ffe1; }
       #hud .br .unit { font-size: 14px; letter-spacing: 3px; }
       #hud .help { left: 16px; bottom: 16px; font-size: 13px; opacity: .8; max-width: calc(100vw - 230px); box-sizing: border-box; }
+      #hud .wrong { top: 34%; left: 50%; transform: translateX(-50%); font-size: 30px; color: #fff; border-color: #ff2040; text-shadow: 0 0 12px #ff2040; background: rgba(60,0,10,.6); letter-spacing: 3px; animation: wrongpulse .7s infinite alternate; }
+      @keyframes wrongpulse { from { opacity: .45; } to { opacity: 1; } }
       #hud .banner { top: 18%; left: 50%; transform: translateX(-50%); font-size: 28px; color: #fff; text-align: center; border-color: #ff2bd6; text-shadow: 0 0 12px #ff2bd6; transition: opacity .3s; }
     `;
     document.head.appendChild(style);
@@ -38,14 +41,17 @@ export class Hud {
       </div>
       <div class="box br"><div class="num" id="h-speed">0</div><div class="unit">KM/H</div></div>
       <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Handbremse · R Neustart · P Pause · T Strecke · M <span id="h-mute">Ton an</span></div>
-      <div class="box banner" id="h-banner" style="opacity:0"></div>`;
+      <div class="box banner" id="h-banner" style="opacity:0"></div>
+      <div class="box wrong" id="h-wrong" style="display:none">⚠ FALSCHE RICHTUNG ⚠</div>`;
     document.body.appendChild(root);
 
     const q = (id: string) => root.querySelector<HTMLElement>('#' + id)!;
     q('h-track').textContent = trackName;
     this.speed = q('h-speed'); this.lap = q('h-lap'); this.cur = q('h-cur');
-    this.last = q('h-last'); this.best = q('h-best'); this.banner = q('h-banner'); this.mute = q('h-mute');
+    this.last = q('h-last'); this.best = q('h-best'); this.banner = q('h-banner'); this.mute = q('h-mute'); this.wrong = q('h-wrong');
   }
+
+  setWrongWay(on: boolean) { this.wrong.style.display = on ? 'block' : 'none'; }
 
   setMuted(muted: boolean) { this.mute.textContent = muted ? 'Ton aus' : 'Ton an'; }
 

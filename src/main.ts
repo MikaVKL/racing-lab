@@ -9,6 +9,7 @@ import { Hud } from './hud';
 import { Effects } from './effects';
 import { Sound } from './audio';
 import { Ghost } from './ghost';
+import { Minimap } from './minimap';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -42,6 +43,7 @@ ghost.validateAgainst(laps.bestLap);
 scene.add(ghost.mesh);
 let serial = laps.lapSerial;
 const hud = new Hud(trackDef.name);
+const minimap = new Minimap(track, trackDef);
 const chase = new ChaseCamera(camera);
 chase.snap(car);
 
@@ -75,6 +77,8 @@ let last = performance.now();
 let countdownLeft = 0;
 let shownCount = -1;
 let paused = false;
+let wrongWayTime = 0;   // Sekunden am Stück entgegen der Fahrtrichtung
+let wrongWay = false;
 
 function beginRace() {
   car.reset(); effects.clear(); laps.reset(); ghost.beginLap(); chase.snap(car);
@@ -106,7 +110,7 @@ renderer.setAnimationLoop((now) => {
   else acc += frameDt;
   while (acc >= STEP) {
     controls = input.read();
-    if (controls.reset) beginRace();
+    if (controls.reset) { beginRace(); wrongWayTime = 0; wrongWay = false; }
 
     if (countdownLeft > 0) {
       // Auto steht, bis der Countdown abgelaufen ist
@@ -120,6 +124,11 @@ renderer.setAnimationLoop((now) => {
       effects.update(car, controls.throttle, controls.brake, controls.handbrake, STEP);
       const before = laps.lapsDone;
       laps.update(car.trackIndex, STEP);
+      // Falsche Richtung: Bewegung entgegen der Streckenrichtung (Rückwärts-Rangieren in Fahrtrichtung zählt nicht)
+      const tg = track.tangents[car.trackIndex];
+      const along = car.vx * tg.x + car.vz * tg.z;
+      wrongWayTime = car.speed > 6 && along < -0.3 * car.speed ? wrongWayTime + STEP : 0;
+      wrongWay = wrongWayTime > 0.8;
       if (laps.running) ghost.record(laps.currentLap, car.x, car.z, car.heading);
       if (laps.lapsDone > before) {
         hud.lapCompleted(laps);
@@ -132,9 +141,11 @@ renderer.setAnimationLoop((now) => {
   if (!paused) chase.update(car, frameDt);
   sound.update(car.speed, controls.throttle, effects.skidding, car.offTrack);
   ghost.show(laps.currentLap, laps.running);
+  hud.setWrongWay(wrongWay && !paused);
+  minimap.update(car, ghost.visible ? { x: ghost.mesh.position.x, z: ghost.mesh.position.z } : null);
   hud.update(car.speed, laps);
   renderer.render(scene, camera);
 });
 
 // Für automatisierte Tests im Browser
-(window as unknown as { __game: unknown }).__game = { car, track, laps, effects, sound, ghost, trackDef, state: () => ({ countdownLeft, paused }) };
+(window as unknown as { __game: unknown }).__game = { car, track, laps, effects, sound, ghost, trackDef, state: () => ({ countdownLeft, paused, wrongWay }) };
