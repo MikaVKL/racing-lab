@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node tests/drive.mjs && node tests/laps.mjs && node tests/effects.mjs && node tests/lap-bot.mjs"
+    "test": "node tests/drive.mjs && node tests/laps.mjs && node tests/effects.mjs && node tests/sound.mjs && node tests/lap-bot.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

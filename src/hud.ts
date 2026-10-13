@@ -7,6 +7,7 @@ export class Hud {
   private last: HTMLElement;
   private best: HTMLElement;
   private banner: HTMLElement;
+  private mute: HTMLElement;
   private bannerUntil = 0;
 
   constructor() {
@@ -35,15 +36,17 @@ export class Hud {
         <div><b>BEST</b> <span id="h-best">--:--.---</span></div>
       </div>
       <div class="box br"><div class="num" id="h-speed">0</div><div class="unit">KM/H</div></div>
-      <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Handbremse · R Neustart</div>
+      <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Handbremse · R Neustart · M <span id="h-mute">Ton an</span></div>
       <div class="box banner" id="h-banner" style="opacity:0"></div>`;
     document.body.appendChild(root);
 
     const q = (id: string) => root.querySelector<HTMLElement>('#' + id)!;
     this.speed = q('h-speed'); this.lap = q('h-lap'); this.cur = q('h-cur');
-    this.last = q('h-last'); this.best = q('h-best'); this.banner = q('h-banner');
+    this.last = q('h-last'); this.best = q('h-best'); this.banner = q('h-banner'); this.mute = q('h-mute');
     this.showBanner('Gas geben zum Start!', 1e9);
   }
+
+  setMuted(muted: boolean) { this.mute.textContent = muted ? 'Ton aus' : 'Ton an'; }
 
   showBanner(text: string, ms = 3000) {
     this.banner.textContent = text;

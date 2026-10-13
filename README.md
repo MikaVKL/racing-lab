@@ -11,6 +11,7 @@ Einfaches 3D-Rennspiel im Browser (Three.js + Vite + TypeScript, ohne Server) in
 | ← → / A D | Lenken |
 | Leertaste | Handbremse (mehr Rutschen) |
 | R | Neustart |
+| M | Ton an/aus (wird gespeichert) |
 
 Die Zeit startet mit dem ersten Gasgeben. Eine Runde zählt nur, wenn alle drei Checkpoints durchfahren wurden.
 Die Bestzeit wird im `localStorage` des Browsers gespeichert.
@@ -33,6 +34,8 @@ npm test
 
 - `tests/drive.mjs` – Gas, Lenken, Rutschen, Bremsen, Reset
 - `tests/laps.mjs` – Rundenzählung, Checkpoints, Bestzeit, Persistenz
+- `tests/effects.mjs` – Driftspuren und Qualm
+- `tests/sound.mjs` – Motorsound, Gänge, Stummschalten
 - `tests/lap-bot.mjs` – ein Bot fährt per Tastatur eine komplette Runde
 - `tests/smoke.mjs` / `tests/camera.mjs` – Screenshots
 
