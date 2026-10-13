@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
-export const TRACK_WIDTH = 16;
+export const TRACK_WIDTH = 18;
+const SCALE = 1.5; // Streckengröße relativ zu den Kontrollpunkten
 export const SAMPLES = 800;
 
 // Kontrollpunkte (x, z) der geschlossenen Strecke – Start/Ziel liegt auf der Geraden bei Punkt 0.
@@ -29,7 +30,7 @@ export class Track {
 
   constructor() {
     const curve = new THREE.CatmullRomCurve3(
-      CONTROL.map(([x, z]) => new THREE.Vector3(x, 0, z)),
+      CONTROL.map(([x, z]) => new THREE.Vector3(x * SCALE, 0, z * SCALE)),
       true,
       'catmullrom',
       0.5,
@@ -147,14 +148,14 @@ export class Track {
     }
 
     // Boden-Raster
-    const grid = new THREE.GridHelper(1200, 120, 0x1a2a6c, 0x101a44);
+    const grid = new THREE.GridHelper(1800, 180, 0x1a2a6c, 0x101a44);
     grid.position.y = -0.05;
     this.group.add(grid);
 
     // Low-Poly-Kulisse: Neon-Pylonen neben der Strecke
     const rng = mulberry32(7);
     const colors = [0xff2bd6, 0x00ffe1, 0x7a5cff, 0xffd23f];
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < 110; i++) {
       const k = Math.floor(rng() * SAMPLES);
       const side = rng() < 0.5 ? -1 : 1;
       const dist = half + 14 + rng() * 40;

@@ -33,12 +33,12 @@ await page.waitForTimeout(300);
 check('Zeit startet mit Gas', (await laps()).running);
 
 // Abkürzung: ohne Checkpoints über die Ziellinie -> keine Runde
-await teleport(780); await page.waitForTimeout(600);
+await teleport(792); await page.waitForTimeout(1200);
 check('Ohne Checkpoints keine Runde', (await laps()).done === 0, await laps());
 
 // Gültige Runde über alle Checkpoints
 for (const i of [200, 400, 600]) { await teleport(i); await page.waitForTimeout(150); }
-await teleport(780); await page.waitForTimeout(800);
+await teleport(792); await page.waitForTimeout(1200);
 const a = await laps();
 check('Gültige Runde wird gezählt', a.done === 1 && a.last > 0, a);
 check('Erste Runde ist Bestzeit', a.best === a.last && a.newBest, a);
@@ -48,7 +48,7 @@ check('Bestzeit im localStorage', Number(stored) === a.best, stored);
 // Zweite, langsamere Runde: Bestzeit bleibt
 await page.waitForTimeout(1500);
 for (const i of [200, 400, 600]) { await teleport(i); await page.waitForTimeout(150); }
-await teleport(780); await page.waitForTimeout(800);
+await teleport(792); await page.waitForTimeout(1200);
 const b = await laps();
 check('Zweite Runde gezählt', b.done === 2, b);
 check('Langsamere Runde ersetzt Bestzeit nicht', b.best === a.best && !b.newBest && b.last > a.best, b);
