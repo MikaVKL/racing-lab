@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Track } from './track';
 import { Car } from './car';
 import { Input } from './input';
+import { ChaseCamera } from './chaseCamera';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -22,9 +23,8 @@ scene.add(car.mesh);
 
 const input = new Input();
 
-// Vorläufige Übersichtskamera (wird in Schritt 4 durch die Verfolgerkamera ersetzt)
-camera.position.set(0, 300, -60);
-camera.lookAt(0, 0, -75);
+const chase = new ChaseCamera(camera);
+chase.snap(car);
 
 addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
@@ -38,14 +38,16 @@ let acc = 0;
 let last = performance.now();
 
 renderer.setAnimationLoop((now) => {
-  acc += Math.min((now - last) / 1000, 0.1);
+  const frameDt = Math.min((now - last) / 1000, 0.1);
   last = now;
+  acc += frameDt;
   while (acc >= STEP) {
     const controls = input.read();
-    if (controls.reset) car.reset();
+    if (controls.reset) { car.reset(); chase.snap(car); }
     car.update(controls, STEP);
     acc -= STEP;
   }
+  chase.update(car, frameDt);
   renderer.render(scene, camera);
 });
 
