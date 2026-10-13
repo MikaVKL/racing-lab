@@ -121,7 +121,7 @@ renderer.setAnimationLoop((now) => {
     } else {
       if (legacyStart && !laps.running && (controls.throttle || controls.brake)) { laps.start(); hud.hideBanner(); }
       car.update(controls, STEP);
-      effects.update(car, controls.throttle, controls.brake, controls.handbrake, STEP);
+      effects.update(car, controls.brake, STEP);
       const before = laps.lapsDone;
       laps.update(car.trackIndex, STEP);
       // Falsche Richtung: Bewegung entgegen der Streckenrichtung (Rückwärts-Rangieren in Fahrtrichtung zählt nicht)

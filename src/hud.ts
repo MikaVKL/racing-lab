@@ -40,7 +40,7 @@ export class Hud {
         <div><b>BEST</b> <span id="h-best">--:--.---</span></div>
       </div>
       <div class="box br"><div class="num" id="h-speed">0</div><div class="unit">KM/H</div></div>
-      <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Handbremse · R Neustart · P Pause · T Strecke · M <span id="h-mute">Ton an</span></div>
+      <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Drift · R Neustart · P Pause · T Strecke · M <span id="h-mute">Ton an</span></div>
       <div class="box banner" id="h-banner" style="opacity:0"></div>
       <div class="box wrong" id="h-wrong" style="display:none">⚠ FALSCHE RICHTUNG ⚠</div>`;
     document.body.appendChild(root);

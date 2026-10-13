@@ -9,11 +9,29 @@ const DRAG = 0.5;          // Luftwiderstand -> Höchstgeschwindigkeit ca. ACCEL
 const REVERSE_MAX = 14;
 const STEER_RATE = 2.4;    // rad/s bei voller Lenkung (bei niedrigem Tempo)
 const GRIP = 5.0;          // wie schnell Querbewegung abgebaut wird (kleiner = rutschiger)
-const GRIP_HANDBRAKE = 1.2;
-const GRIP_RECOVERY = 3.0;    // Grip-Aufbau nach der Handbremse (Einheiten pro Sekunde): ca. 1,3 s bis zum vollen Grip
-const SLIDE_TO_FORWARD = 0.5; // Anteil der abgebauten Querbewegung, der beim Grip-Aufbau in Vorwärtsschwung übergeht
+const GRIP_RECOVERY = 3.0; // Grip-Aufbau nach dem Drift (Einheiten pro Sekunde)
+const GRIP_EXIT = 0.8;     // Grip direkt nach dem Drift: die Bewegungsrichtung bleibt erhalten
 const OFFTRACK_DRAG = 2.2; // zusätzliche Reibung im Gelände
 const CAR_HALF_WIDTH = 1;
+
+// Drift (Leertaste + Lenken), angelehnt an Mario Kart: eigener Zustand mit festem Bogen,
+// die Nase zeigt nach innen; beim Loslassen schwenkt sie zur Bewegungsrichtung zurück (kein Boost)
+const DRIFT_MIN_SPEED = 12;     // m/s, darunter kein Drift
+const DRIFT_STEER_MIN = 0.2;    // nötige Lenkung zum Start
+const DRIFT_TURN_BASE = 1.0;    // Drehrate der Bewegungsrichtung relativ zum normalen Lenken (neutral)
+const DRIFT_TURN_STEER = 0.5;   // +/- je nach Lenken mit (+) oder gegen (-) die Driftrichtung
+const DRIFT_ANGLE = 0.38;       // rad: um so viel eilt die Nase der Bewegungsrichtung nach innen voraus
+const DRIFT_ANGLE_STEER = 0.2;  // +/- je nach Lenken
+const DRIFT_HEADING_FOLLOW = 10; // 1/s: wie schnell die Nase ihren Winkel einnimmt
+const DRIFT_SPEED_LOSS = 0.1;   // 1/s: leichter Tempoverlust im Drift
+const EXIT_ALIGN = 9;           // 1/s: Nase schwenkt nach dem Drift zur Bewegungsrichtung
+const EXIT_TIME = 0.5;          // s
+const HOP_TIME = 0.28;          // s: kleiner Hüpfer beim Driftstart
+const HOP_HEIGHT = 0.45;        // m
+
+const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
+/** Lenkwirkung: bei Stillstand keine Drehung, bei hohem Tempo etwas weniger Einschlag */
+const turnFactor = (speed: number) => Math.min(Math.abs(speed) / 8, 1) / (1 + Math.abs(speed) / 30);
 
 export class Car {
   readonly mesh = new THREE.Group();
@@ -29,8 +47,15 @@ export class Car {
   offTrack = false;
   /** Index der nächsten Streckenstützstelle (für Rundenzählung) */
   trackIndex = 0;
-  /** aktueller Seitengrip (fällt mit der Handbremse sofort, steigt danach allmählich) */
+  /** aktueller Seitengrip (nach dem Drift niedrig, steigt dann allmählich) */
   grip = GRIP;
+  /** true, solange der Drift läuft */
+  drifting = false;
+  /** Driftrichtung: +1 links, -1 rechts */
+  driftDir = 0;
+  private travel = 0;     // Bewegungsrichtung im Drift (rad)
+  private exitT = 0;      // Restzeit, in der die Nase nach dem Drift zur Bewegungsrichtung schwenkt
+  private hopT = 0;
   private body: THREE.Group;
   private lastIndex: number | undefined;
 
@@ -51,20 +76,85 @@ export class Car {
     this.steer = 0;
     this.slip = 0;
     this.grip = GRIP;
+    this.drifting = false;
+    this.driftDir = 0;
+    this.exitT = 0;
+    this.hopT = 0;
     this.lastIndex = undefined; // volle Suche nach dem Teleport
     this.syncMesh(0);
   }
 
   update(c: Controls, dt: number) {
-    const fx = Math.sin(this.heading), fz = Math.cos(this.heading);
-    const rx = Math.cos(this.heading), rz = -Math.sin(this.heading);
-    let vf = this.vx * fx + this.vz * fz;
-    let vr = this.vx * rx + this.vz * rz;
-
     // Lenkung sanft aufbauen/zurückführen
     const target = c.steer;
     const rate = target === 0 ? 8 : 5;
     this.steer += Math.sign(target - this.steer) * Math.min(Math.abs(target - this.steer), rate * dt);
+
+    // Streckenposition und Offroad-Erkennung
+    const q = this.track.query(this.x, this.z, this.lastIndex);
+    this.lastIndex = q.index;
+    this.trackIndex = q.index;
+    this.offTrack = q.distance > this.track.width / 2 + CAR_HALF_WIDTH;
+
+    this.updateDriftState(c);
+    if (this.drifting) this.updateDrift(c, dt);
+    else this.updateNormal(c, dt);
+
+    this.x += this.vx * dt;
+    this.z += this.vz * dt;
+
+    this.slip = this.vx * Math.cos(this.heading) - this.vz * Math.sin(this.heading);
+    if (this.hopT > 0) this.hopT = Math.max(0, this.hopT - dt);
+    this.syncMesh(dt);
+  }
+
+  /** Drift beginnt mit Leertaste + Lenken bei genug Tempo und endet beim Loslassen */
+  private updateDriftState(c: Controls) {
+    const forward = this.vx * Math.sin(this.heading) + this.vz * Math.cos(this.heading);
+    const can = c.handbrake && !this.offTrack && forward > DRIFT_MIN_SPEED;
+    if (!this.drifting) {
+      if (can && Math.abs(this.steer) > DRIFT_STEER_MIN) {
+        this.drifting = true;
+        this.driftDir = Math.sign(this.steer);
+        this.travel = Math.atan2(this.vx, this.vz);
+        this.hopT = HOP_TIME;
+        this.exitT = 0;
+      }
+    } else if (!can) {
+      // Drift beendet: Bewegungsrichtung bleibt, die Nase schwenkt dorthin zurück
+      this.drifting = false;
+      this.exitT = EXIT_TIME;
+      this.grip = GRIP_EXIT;
+    }
+  }
+
+  /** Drift: fester Bogen, Nase zeigt nach innen, Lenken macht den Bogen enger oder weiter */
+  private updateDrift(c: Controls, dt: number) {
+    let s = this.speed;
+    if (c.throttle) s += ACCEL * dt;
+    if (c.brake) s -= BRAKE * dt;
+    if (!c.throttle && !c.brake) s -= Math.min(s, 4 * dt);
+    s *= Math.exp(-(DRAG + DRIFT_SPEED_LOSS) * dt);
+    if (this.offTrack) s *= Math.exp(-OFFTRACK_DRAG * dt);
+    s = Math.max(s, 0);
+
+    const along = this.steer * this.driftDir; // -1 gegen, +1 mit der Driftrichtung
+    const turn = STEER_RATE * turnFactor(s) * (DRIFT_TURN_BASE + DRIFT_TURN_STEER * along);
+    this.travel += this.driftDir * turn * dt;
+
+    const noseTarget = this.travel + this.driftDir * (DRIFT_ANGLE + DRIFT_ANGLE_STEER * along);
+    this.heading += wrapAngle(noseTarget - this.heading) * (1 - Math.exp(-DRIFT_HEADING_FOLLOW * dt));
+
+    this.vx = s * Math.sin(this.travel);
+    this.vz = s * Math.cos(this.travel);
+  }
+
+  /** Normales Fahren: Auto dreht sich, Geschwindigkeit folgt über den Seitengrip (leichtes Rutschen) */
+  private updateNormal(c: Controls, dt: number) {
+    const fx = Math.sin(this.heading), fz = Math.cos(this.heading);
+    const rx = Math.cos(this.heading), rz = -Math.sin(this.heading);
+    let vf = this.vx * fx + this.vz * fz;
+    let vr = this.vx * rx + this.vz * rz;
 
     // Längsdynamik
     if (c.throttle) vf += ACCEL * dt;
@@ -73,47 +163,38 @@ export class Car {
     vf *= Math.exp(-DRAG * dt * (vf > 0 ? 1 : 0.5));
     vf = Math.max(vf, -REVERSE_MAX);
 
-    // Offroad-Bremsung
-    const q = this.track.query(this.x, this.z, this.lastIndex);
-    this.lastIndex = q.index;
-    this.trackIndex = q.index;
-    this.offTrack = q.distance > this.track.width / 2 + CAR_HALF_WIDTH;
     if (this.offTrack) {
       const k = Math.exp(-OFFTRACK_DRAG * dt);
       vf *= k; vr *= k;
     }
 
-    // Seitengrip: nur begrenzt, dadurch rutscht das Auto in Kurven leicht
-    // Die Handbremse nimmt den Grip sofort, nach dem Loslassen baut er sich nur allmählich wieder auf
-    // (sonst "rastet" das Auto schlagartig auf die Blickrichtung ein und die Querbewegung ist weg).
-    const gripTarget = c.handbrake ? GRIP_HANDBRAKE : GRIP;
-    this.grip = gripTarget < this.grip ? gripTarget : Math.min(gripTarget, this.grip + GRIP_RECOVERY * dt);
-    const vrBefore = vr;
+    // Seitengrip: nur begrenzt, dadurch rutscht das Auto in Kurven leicht. Nach dem Drift startet er niedrig
+    // und baut sich allmählich auf, damit die Bewegungsrichtung nicht schlagartig zur Blickrichtung springt.
+    this.grip = Math.min(GRIP, this.grip + GRIP_RECOVERY * dt);
     vr *= Math.exp(-this.grip * dt);
-    // Beim Grip-Aufbau (nach dem Loslassen) geht ein Teil der Rutschbewegung in Vorwärtsschwung über, statt zu verschwinden
-    if (!c.handbrake && this.grip < GRIP - 0.01 && vf > 0) vf += Math.abs(vrBefore - vr) * SLIDE_TO_FORWARD;
 
-    // Gierrate: bei Stillstand keine Drehung, bei hohem Tempo etwas weniger Lenkeinschlag
-    const speedFactor = Math.min(Math.abs(vf) / 8, 1) / (1 + Math.abs(vf) / 30);
+    // Gierrate
     const dir = vf >= 0 ? 1 : -1;
-    this.heading += this.steer * STEER_RATE * speedFactor * dir * dt;
+    this.heading += this.steer * STEER_RATE * turnFactor(vf) * dir * dt;
+
+    // nach dem Drift: Nase schwenkt zur Bewegungsrichtung zurück (statt dass die Bewegung zur Nase springt)
+    if (this.exitT > 0) {
+      const sp = Math.hypot(this.vx, this.vz);
+      if (sp > 1) this.heading += wrapAngle(Math.atan2(this.vx, this.vz) - this.heading) * (1 - Math.exp(-EXIT_ALIGN * dt));
+      this.exitT = Math.max(0, this.exitT - dt);
+    }
 
     // zurück in Weltkoordinaten – mit der Basis VOR der Drehung: Das Heading dreht sich,
     // die Geschwindigkeit bleibt zunächst erhalten und wird nur über den Grip abgebaut -> Rutschen
     this.vx = fx * vf + rx * vr;
     this.vz = fz * vf + rz * vr;
-
-    this.x += this.vx * dt;
-    this.z += this.vz * dt;
-
-    this.slip = this.vx * Math.cos(this.heading) - this.vz * Math.sin(this.heading);
-    this.syncMesh(dt);
   }
 
   private roll = 0;
 
   private syncMesh(dt: number) {
-    this.mesh.position.set(this.x, 0, this.z);
+    const hop = this.hopT > 0 ? HOP_HEIGHT * Math.sin(Math.PI * (1 - this.hopT / HOP_TIME)) : 0;
+    this.mesh.position.set(this.x, hop, this.z);
     this.mesh.rotation.y = this.heading;
     // leichtes Wanken in Kurven + Ausrichtung des Hecks beim Rutschen
     const targetRoll = THREE.MathUtils.clamp(-this.slip * 0.012, -0.12, 0.12);

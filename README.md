@@ -9,7 +9,7 @@ Einfaches 3D-Rennspiel im Browser (Three.js + Vite + TypeScript, ohne Server) in
 | ↑ / W | Gas |
 | ↓ / S | Bremse / Rückwärts |
 | ← → / A D | Lenken |
-| Leertaste | Handbremse (mehr Rutschen) |
+| Leertaste (gedrückt halten) + Lenken | Drift im Mario-Kart-Stil: Hüpfer, fester Bogen, Nase zeigt nach innen. Mit dem Drift lenken = engerer Bogen, gegen ihn = weiterer. Loslassen: Bewegung bleibt erhalten, kein Boost |
 | R | Neustart (mit Countdown) |
 | P / Esc | Pause (auch automatisch beim Tab-Wechsel) |
 | T | nächste Strecke (wird gespeichert) |
@@ -36,7 +36,7 @@ npm test
 
 - `tests/countdown.mjs` – Countdown, Pause, Neustart
 - `tests/hud-extras.mjs` – Warnung „Falsche Richtung“, Minikarte
-- `tests/drift-release.mjs` – Handbremse loslassen: Rutschen baut sich weich ab
+- `tests/drift.mjs` – Drift: Start, Bogen, Lenken mit/gegen, Loslassen ohne Anhalten und ohne Boost
 - `tests/drive.mjs` – Gas, Lenken, Rutschen, Bremsen, Reset
 - `tests/laps.mjs` – Rundenzählung, Checkpoints, Bestzeit, Persistenz
 - `tests/effects.mjs` – Driftspuren und Qualm

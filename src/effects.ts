@@ -54,11 +54,10 @@ export class Effects {
     }
   }
 
-  update(car: Car, throttle: boolean, brake: boolean, handbrake: boolean, dt: number) {
+  update(car: Car, brake: boolean, dt: number) {
     const sideSlip = Math.abs(car.slip);
     const braking = brake && car.speed > 15;
-    const burnout = handbrake && car.speed > 8;
-    this.skidding = !car.offTrack && (sideSlip > SLIP_THRESHOLD || braking || burnout);
+    this.skidding = !car.offTrack && (sideSlip > SLIP_THRESHOLD || braking || car.drifting);
 
     if (this.skidding) {
       const moved = Math.hypot(car.x - this.lastX, car.z - this.lastZ);
@@ -70,7 +69,7 @@ export class Effects {
       this.smokeTimer -= dt;
       if (this.smokeTimer <= 0) {
         this.smokeTimer = 0.05;
-        this.emitSmoke(car, Math.min(1, sideSlip / 10 + (braking || burnout ? 0.4 : 0)));
+        this.emitSmoke(car, Math.min(1, sideSlip / 10 + (braking || car.drifting ? 0.4 : 0)));
       }
     } else {
       this.dist = 0;
