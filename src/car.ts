@@ -10,6 +10,8 @@ const REVERSE_MAX = 14;
 const STEER_RATE = 2.4;    // rad/s bei voller Lenkung (bei niedrigem Tempo)
 const GRIP = 5.0;          // wie schnell Querbewegung abgebaut wird (kleiner = rutschiger)
 const GRIP_HANDBRAKE = 1.2;
+const GRIP_RECOVERY = 3.0;    // Grip-Aufbau nach der Handbremse (Einheiten pro Sekunde): ca. 1,3 s bis zum vollen Grip
+const SLIDE_TO_FORWARD = 0.5; // Anteil der abgebauten Querbewegung, der beim Grip-Aufbau in Vorwärtsschwung übergeht
 const OFFTRACK_DRAG = 2.2; // zusätzliche Reibung im Gelände
 const CAR_HALF_WIDTH = 1;
 
@@ -27,6 +29,8 @@ export class Car {
   offTrack = false;
   /** Index der nächsten Streckenstützstelle (für Rundenzählung) */
   trackIndex = 0;
+  /** aktueller Seitengrip (fällt mit der Handbremse sofort, steigt danach allmählich) */
+  grip = GRIP;
   private body: THREE.Group;
   private lastIndex: number | undefined;
 
@@ -46,6 +50,7 @@ export class Car {
     this.vx = this.vz = 0;
     this.steer = 0;
     this.slip = 0;
+    this.grip = GRIP;
     this.lastIndex = undefined; // volle Suche nach dem Teleport
     this.syncMesh(0);
   }
@@ -79,8 +84,14 @@ export class Car {
     }
 
     // Seitengrip: nur begrenzt, dadurch rutscht das Auto in Kurven leicht
-    const grip = c.handbrake ? GRIP_HANDBRAKE : GRIP;
-    vr *= Math.exp(-grip * dt);
+    // Die Handbremse nimmt den Grip sofort, nach dem Loslassen baut er sich nur allmählich wieder auf
+    // (sonst "rastet" das Auto schlagartig auf die Blickrichtung ein und die Querbewegung ist weg).
+    const gripTarget = c.handbrake ? GRIP_HANDBRAKE : GRIP;
+    this.grip = gripTarget < this.grip ? gripTarget : Math.min(gripTarget, this.grip + GRIP_RECOVERY * dt);
+    const vrBefore = vr;
+    vr *= Math.exp(-this.grip * dt);
+    // Beim Grip-Aufbau (nach dem Loslassen) geht ein Teil der Rutschbewegung in Vorwärtsschwung über, statt zu verschwinden
+    if (!c.handbrake && this.grip < GRIP - 0.01 && vf > 0) vf += Math.abs(vrBefore - vr) * SLIDE_TO_FORWARD;
 
     // Gierrate: bei Stillstand keine Drehung, bei hohem Tempo etwas weniger Lenkeinschlag
     const speedFactor = Math.min(Math.abs(vf) / 8, 1) / (1 + Math.abs(vf) / 30);

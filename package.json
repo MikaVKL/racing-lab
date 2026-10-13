@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node tests/countdown.mjs && node tests/hud-extras.mjs && node tests/drive.mjs && node tests/laps.mjs && node tests/effects.mjs && node tests/sound.mjs && node tests/ghost.mjs && node tests/tracks.mjs && node tests/lap-bot.mjs 'http://localhost:5173/?track=serpentine' && node tests/lap-bot.mjs"
+    "test": "node tests/countdown.mjs && node tests/hud-extras.mjs && node tests/drive.mjs && node tests/drift-release.mjs && node tests/laps.mjs && node tests/effects.mjs && node tests/sound.mjs && node tests/ghost.mjs && node tests/tracks.mjs && node tests/lap-bot.mjs 'http://localhost:5173/?track=serpentine' && node tests/lap-bot.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

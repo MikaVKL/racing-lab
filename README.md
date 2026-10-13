@@ -36,6 +36,7 @@ npm test
 
 - `tests/countdown.mjs` – Countdown, Pause, Neustart
 - `tests/hud-extras.mjs` – Warnung „Falsche Richtung“, Minikarte
+- `tests/drift-release.mjs` – Handbremse loslassen: Rutschen baut sich weich ab
 - `tests/drive.mjs` – Gas, Lenken, Rutschen, Bremsen, Reset
 - `tests/laps.mjs` – Rundenzählung, Checkpoints, Bestzeit, Persistenz
 - `tests/effects.mjs` – Driftspuren und Qualm
