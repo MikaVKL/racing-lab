@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { buildCarModel } from './car';
+import { storageKey } from './tracks';
 
 const SAMPLE_HZ = 30;
-const STORAGE_KEY = 'racing-lab.ghost';
+const STORAGE_BASE = 'racing-lab.ghost';
 
 interface Stored { lap: number; s: number[] }
 
@@ -15,7 +16,10 @@ export class Ghost {
   private rec: number[] = [];
   private nextSample = 0;
 
-  constructor() {
+  private key: string;
+
+  constructor(trackId: string) {
+    this.key = storageKey(STORAGE_BASE, trackId);
     this.mesh = buildCarModel();
     this.mesh.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.Material | undefined;
@@ -60,7 +64,7 @@ export class Ghost {
     this.bestLap = lapTime;
     try {
       const data: Stored = { lap: lapTime, s: this.best };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(this.key, JSON.stringify(data));
     } catch { /* ignorieren */ }
   }
 
@@ -81,7 +85,7 @@ export class Ghost {
 
   private load() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(this.key);
       if (!raw) return;
       const d = JSON.parse(raw) as Stored;
       if (Array.isArray(d.s) && d.s.length >= 6 && d.s.length % 3 === 0 && isFinite(d.lap)) {

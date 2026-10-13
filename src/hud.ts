@@ -10,7 +10,7 @@ export class Hud {
   private mute: HTMLElement;
   private bannerUntil = 0;
 
-  constructor() {
+  constructor(trackName: string) {
     const style = document.createElement('style');
     style.textContent = `
       #hud { position: fixed; inset: 0; pointer-events: none; font-family: 'Courier New', monospace; color: #00ffe1; text-shadow: 0 0 8px #00ffe1; user-select: none; }
@@ -21,7 +21,7 @@ export class Hud {
       #hud .br { right: 16px; bottom: 16px; text-align: right; }
       #hud .br .num { font-size: 52px; line-height: 1; color: #fff; text-shadow: 0 0 12px #00ffe1; }
       #hud .br .unit { font-size: 14px; letter-spacing: 3px; }
-      #hud .help { left: 16px; bottom: 16px; font-size: 13px; opacity: .8; }
+      #hud .help { left: 16px; bottom: 16px; font-size: 13px; opacity: .8; max-width: calc(100vw - 230px); box-sizing: border-box; }
       #hud .banner { top: 18%; left: 50%; transform: translateX(-50%); font-size: 28px; color: #fff; text-align: center; border-color: #ff2bd6; text-shadow: 0 0 12px #ff2bd6; transition: opacity .3s; }
     `;
     document.head.appendChild(style);
@@ -30,17 +30,19 @@ export class Hud {
     root.id = 'hud';
     root.innerHTML = `
       <div class="box tl">
+        <div><b>STRECKE</b> <span id="h-track"></span></div>
         <div><b>RUNDE</b> <span id="h-lap" class="big">1</span></div>
         <div><b>ZEIT</b> <span id="h-cur">00:00.000</span></div>
         <div><b>LETZTE</b> <span id="h-last">--:--.---</span></div>
         <div><b>BEST</b> <span id="h-best">--:--.---</span></div>
       </div>
       <div class="box br"><div class="num" id="h-speed">0</div><div class="unit">KM/H</div></div>
-      <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Handbremse · R Neustart · M <span id="h-mute">Ton an</span></div>
+      <div class="box help">↑/W Gas · ↓/S Bremse · ←→/AD Lenken · Leertaste Handbremse · R Neustart · T Strecke · M <span id="h-mute">Ton an</span></div>
       <div class="box banner" id="h-banner" style="opacity:0"></div>`;
     document.body.appendChild(root);
 
     const q = (id: string) => root.querySelector<HTMLElement>('#' + id)!;
+    q('h-track').textContent = trackName;
     this.speed = q('h-speed'); this.lap = q('h-lap'); this.cur = q('h-cur');
     this.last = q('h-last'); this.best = q('h-best'); this.banner = q('h-banner'); this.mute = q('h-mute');
     this.showBanner('Gas geben zum Start!', 1e9);

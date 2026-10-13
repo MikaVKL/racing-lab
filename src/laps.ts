@@ -1,6 +1,8 @@
 // Rundenzählung und Zeitnahme (reine Logik, ohne DOM/Three – gut testbar)
 
-const STORAGE_KEY = 'racing-lab.bestLap';
+import { storageKey } from './tracks';
+
+const STORAGE_BASE = 'racing-lab.bestLap';
 const CHECKPOINTS = 3; // bei 25 %, 50 % und 75 % der Strecke
 
 export function formatTime(seconds: number | null): string {
@@ -11,24 +13,24 @@ export function formatTime(seconds: number | null): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms % 1000).padStart(3, '0')}`;
 }
 
-export function loadBest(): number | null {
+export function loadBest(trackId: string): number | null {
   try {
-    const v = parseFloat(localStorage.getItem(STORAGE_KEY) ?? '');
+    const v = parseFloat(localStorage.getItem(storageKey(STORAGE_BASE, trackId)) ?? '');
     return isFinite(v) && v > 0 ? v : null;
   } catch {
     return null; // Speicher gesperrt (z. B. privater Modus)
   }
 }
 
-function saveBest(t: number) {
-  try { localStorage.setItem(STORAGE_KEY, String(t)); } catch { /* ignorieren */ }
+function saveBest(trackId: string, t: number) {
+  try { localStorage.setItem(storageKey(STORAGE_BASE, trackId), String(t)); } catch { /* ignorieren */ }
 }
 
 export class LapTimer {
   /** Anzahl abgeschlossener Runden */
   lapsDone = 0;
   lastLap: number | null = null;
-  bestLap: number | null = loadBest();
+  bestLap: number | null;
   /** true, wenn die letzte Runde eine neue Bestzeit war */
   newBest = false;
   running = false;
@@ -39,7 +41,9 @@ export class LapTimer {
   private nextCp = 1;
   private prevIndex: number | null = null;
 
-  constructor(private samples: number) {}
+  constructor(private samples: number, private trackId: string) {
+    this.bestLap = loadBest(trackId);
+  }
 
   get currentLap() { return this.running ? this.clock - this.lapStart : 0; }
 
@@ -75,7 +79,7 @@ export class LapTimer {
         this.lapsDone++;
         this.lastLap = t;
         this.newBest = this.bestLap === null || t < this.bestLap;
-        if (this.newBest) { this.bestLap = t; saveBest(t); }
+        if (this.newBest) { this.bestLap = t; saveBest(this.trackId, t); }
       }
       this.lapStart = this.clock;
       this.nextCp = 1;
