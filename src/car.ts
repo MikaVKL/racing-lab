@@ -18,11 +18,11 @@ const CAR_HALF_WIDTH = 1;
 // die Nase zeigt nach innen; beim Loslassen schwenkt sie zur Bewegungsrichtung zurück (kein Boost)
 const DRIFT_MIN_SPEED = 12;     // m/s, darunter kein Drift
 const DRIFT_STEER_MIN = 0.2;    // nötige Lenkung zum Start
-const DRIFT_TURN_BASE = 1.0;    // Drehrate der Bewegungsrichtung relativ zum normalen Lenken (neutral)
-const DRIFT_TURN_STEER = 0.5;   // +/- je nach Lenken mit (+) oder gegen (-) die Driftrichtung
-const DRIFT_ANGLE = 0.38;       // rad: um so viel eilt die Nase der Bewegungsrichtung nach innen voraus
-const DRIFT_ANGLE_STEER = 0.2;  // +/- je nach Lenken
-const DRIFT_HEADING_FOLLOW = 10; // 1/s: wie schnell die Nase ihren Winkel einnimmt
+const DRIFT_TURN_BASE = 0.6;    // Drehrate der Bewegungsrichtung relativ zum normalen Lenken (neutral)
+const DRIFT_TURN_STEER = 0.3;   // +/- je nach Lenken mit (+) oder gegen (-) die Driftrichtung
+const DRIFT_ANGLE = 0.30;       // rad: um so viel eilt die Nase der Bewegungsrichtung nach innen voraus
+const DRIFT_ANGLE_STEER = 0.12; // +/- je nach Lenken
+const DRIFT_HEADING_FOLLOW = 7;  // 1/s: wie schnell die Nase ihren Winkel einnimmt
 const DRIFT_SPEED_LOSS = 0.1;   // 1/s: leichter Tempoverlust im Drift
 const EXIT_ALIGN = 9;           // 1/s: Nase schwenkt nach dem Drift zur Bewegungsrichtung
 const EXIT_TIME = 0.5;          // s

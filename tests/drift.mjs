@@ -47,8 +47,8 @@ await page.waitForTimeout(600);
 const b1 = await st();
 const rate = wrap(b1.travel - b0.travel) / ((b1.t - b0.t) / 1000);
 check('Leertaste + Lenken startet den Drift (links)', b0.drift && b0.dir === 1, b0);
-check('Nase zeigt nach innen (eilt der Bewegung voraus)', b1.lead > 0.15 && b1.lead < 0.65, { lead_rad: +b1.lead.toFixed(2) });
-check('Bewegungsrichtung dreht sich nach links im Bogen', rate > 0.5 && rate < 2.2, { rad_pro_s: +rate.toFixed(2) });
+check('Nase zeigt nach innen (eilt der Bewegung voraus)', b1.lead > 0.12 && b1.lead < 0.5, { lead_rad: +b1.lead.toFixed(2) });
+check('Bewegungsrichtung dreht sich nach links im Bogen', rate > 0.4 && rate < 1.3, { rad_pro_s: +rate.toFixed(2), grad_pro_s: Math.round(rate * 57.3) });
 await release();
 
 // --- C) Mit dem Drift lenken = enger, gegen den Drift = weiter
@@ -63,6 +63,8 @@ const measureRate = async (extraKey) => {
   return wrap(z.travel - a.travel) / ((z.t - a.t) / 1000);
 };
 const withR = await measureRate('with'), neutR = await measureRate('neutral'), againstR = await measureRate('against');
+// Rückmeldung: der Drift war zu eng ("fast direkt 90 Grad"). Bei voller Mitlenkung höchstens 65° Richtungsänderung pro Sekunde.
+check('Drift ist nicht zu eng: eingeschwungen höchstens 65° pro Sekunde', withR * 57.3 <= 65, { grad_pro_s: Math.round(withR * 57.3) });
 check('Mit dem Drift lenken: engerer Bogen als neutral', withR > neutR * 1.15, { mit: +withR.toFixed(2), neutral: +neutR.toFixed(2) });
 check('Gegen den Drift lenken: weiterer Bogen als neutral', againstR < neutR * 0.85, { gegen: +againstR.toFixed(2), neutral: +neutR.toFixed(2) });
 
