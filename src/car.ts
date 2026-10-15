@@ -29,6 +29,15 @@ const EXIT_TIME = 0.5;          // s
 const HOP_TIME = 0.28;          // s: kleiner Hüpfer beim Driftstart
 const HOP_HEIGHT = 0.45;        // m
 
+// Feintuning per URL, z. B. ?drift=0.5&nose=0.7 (1 = Standard): Drehstärke bzw. Nasenwinkel im Drift
+const urlParams = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
+const tune = (name: string) => {
+  const v = parseFloat(urlParams.get(name) ?? '');
+  return isFinite(v) && v > 0 && v <= 3 ? v : 1;
+};
+export const DRIFT_TURN_SCALE = tune('drift');
+export const DRIFT_NOSE_SCALE = tune('nose');
+
 const wrapAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 /** Lenkwirkung: bei Stillstand keine Drehung, bei hohem Tempo etwas weniger Einschlag */
 const turnFactor = (speed: number) => Math.min(Math.abs(speed) / 8, 1) / (1 + Math.abs(speed) / 30);
@@ -139,10 +148,10 @@ export class Car {
     s = Math.max(s, 0);
 
     const along = this.steer * this.driftDir; // -1 gegen, +1 mit der Driftrichtung
-    const turn = STEER_RATE * turnFactor(s) * (DRIFT_TURN_BASE + DRIFT_TURN_STEER * along);
+    const turn = STEER_RATE * turnFactor(s) * (DRIFT_TURN_BASE + DRIFT_TURN_STEER * along) * DRIFT_TURN_SCALE;
     this.travel += this.driftDir * turn * dt;
 
-    const noseTarget = this.travel + this.driftDir * (DRIFT_ANGLE + DRIFT_ANGLE_STEER * along);
+    const noseTarget = this.travel + this.driftDir * (DRIFT_ANGLE + DRIFT_ANGLE_STEER * along) * DRIFT_NOSE_SCALE;
     this.heading += wrapAngle(noseTarget - this.heading) * (1 - Math.exp(-DRIFT_HEADING_FOLLOW * dt));
 
     this.vx = s * Math.sin(this.travel);

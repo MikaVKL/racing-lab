@@ -94,6 +94,14 @@ for (const throttle of [true, false]) {
   else check('Loslassen (ohne Gas): kein Boost', maxV <= before.v * 1.005, { vorher: +before.v.toFixed(1), max: +maxV.toFixed(1) });
 }
 
+// --- E) Feintuning per URL: ?drift=0.5 halbiert die Drehstärke, ?nose=0.5 den Nasenwinkel
+await page.goto(url + '?drift=0.5&nose=0.5');
+await page.waitForFunction(() => window.__game);
+const halfR = await measureRate('with');
+check('?drift=0.5 halbiert die Drehstärke', halfR > withR * 0.35 && halfR < withR * 0.72, { standard: +withR.toFixed(2), halb: +halfR.toFixed(2) });
+const tag = await page.evaluate(() => document.querySelector('#h-build').textContent);
+check('Build-Kennung zeigt die Feineinstellung', /drift 0\.5/.test(tag) && /nose 0\.5/.test(tag), tag);
+
 await browser.close();
 if (errors.length) { console.error('Konsolenfehler:', errors); fails.push('Konsole'); }
 process.exit(fails.length ? 1 : 0);

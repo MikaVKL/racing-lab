@@ -46,6 +46,16 @@ npm test
 - `tests/lap-bot.mjs [url]` – ein Bot fährt per Tastatur eine komplette Runde
 - `tests/smoke.mjs` / `tests/camera.mjs` – Screenshots
 
+### Drift-Gefühl einstellen
+
+Die Stärke lässt sich ohne Neubau per URL ausprobieren (1 = Standard):
+
+- `?drift=0.5` – Drehstärke im Drift (kleiner = weiterer Bogen)
+- `?nose=0.5` – Winkel, um den die Nase nach innen zeigt
+
+Beides lässt sich kombinieren (`?drift=0.6&nose=0.7`). Oben mittig zeigt das HUD die Build-Kennung (Commit) und die gesetzten Werte.
+Die festen Werte stehen oben in `src/car.ts` (`DRIFT_*`).
+
 Die Tests setzen `window.__NO_COUNTDOWN` und starten damit ohne Countdown (Zeit startet beim ersten Gasgeben); nur `countdown.mjs` testet den echten Ablauf.
 
 Eigenen Chromium-Pfad setzen mit `CHROMIUM_PATH=...` (Standard: `tests/launch.mjs`).

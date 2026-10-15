@@ -25,6 +25,10 @@ const mapStats = () => page.evaluate(() => {
   return { w: c.width, n, mag, hash };
 });
 
+// Build-Kennung
+const build = await page.evaluate(() => document.querySelector('#h-build').textContent);
+check('Build-Kennung wird angezeigt', /^Version ([0-9a-f]{7,}|dev)$/.test(build), build);
+
 // Minikarte
 await page.waitForTimeout(500);
 const m1 = await mapStats();
