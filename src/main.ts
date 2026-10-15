@@ -148,4 +148,4 @@ renderer.setAnimationLoop((now) => {
 });
 
 // Für automatisierte Tests im Browser
-(window as unknown as { __game: unknown }).__game = { car, track, laps, effects, sound, ghost, trackDef, state: () => ({ countdownLeft, paused, wrongWay }) };
+(window as unknown as { __game: unknown }).__game = { car, track, laps, effects, sound, ghost, trackDef, chase, state: () => ({ countdownLeft, paused, wrongWay }) };

@@ -36,6 +36,7 @@ npm test
 
 - `tests/countdown.mjs` – Countdown, Pause, Neustart
 - `tests/hud-extras.mjs` – Warnung „Falsche Richtung“, Minikarte
+- `tests/drift-feel.mjs` – Drift-Gefühl (deterministisch): weicher Einstieg, Auto erscheint schräg zur Kamera
 - `tests/drift.mjs` – Drift: Start, Bogen, Lenken mit/gegen, Loslassen ohne Anhalten und ohne Boost
 - `tests/drive.mjs` – Gas, Lenken, Rutschen, Bremsen, Reset
 - `tests/laps.mjs` – Rundenzählung, Checkpoints, Bestzeit, Persistenz

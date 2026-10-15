@@ -8,7 +8,8 @@ const FOV_MIN = 66;
 const FOV_MAX = 88;
 
 export class ChaseCamera {
-  private heading = 0;
+  /** aktuelle Blickrichtung der Kamera (rad) */
+  heading = 0;
   private pos = new THREE.Vector3();
   private target = new THREE.Vector3();
   private initialised = false;
@@ -20,8 +21,14 @@ export class ChaseCamera {
 
   update(car: Car, dt: number) {
     // Kamera-Richtung folgt dem Heading zeitverzögert -> beim Rutschen sieht man die Seite des Autos
-    const diff = Math.atan2(Math.sin(car.heading - this.heading), Math.cos(car.heading - this.heading));
-    this.heading = this.initialised ? this.heading + diff * Math.min(1, dt * 4) : car.heading;
+    // Die Kamera schaut (je nach Tempo) überwiegend in Bewegungsrichtung statt in Blickrichtung der Nase:
+    // Beim Driften sieht man das Auto dadurch dauerhaft schräg, statt dass die ganze Welt mit der Nase schwenkt.
+    const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
+    const forward = car.vx * Math.sin(car.heading) + car.vz * Math.cos(car.heading);
+    const w = Math.min(Math.max((forward - 4) / 10, 0), 1) * (car.drifting ? 0.95 : 0.6);
+    const aim = car.heading + wrap(Math.atan2(car.vx, car.vz) - car.heading) * w;
+    const diff = wrap(aim - this.heading);
+    this.heading = this.initialised ? this.heading + diff * Math.min(1, dt * 4) : aim;
 
     const fx = Math.sin(this.heading), fz = Math.cos(this.heading);
     const wantPos = new THREE.Vector3(car.x - fx * DISTANCE, HEIGHT, car.z - fz * DISTANCE);

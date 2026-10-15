@@ -18,11 +18,12 @@ const CAR_HALF_WIDTH = 1;
 // die Nase zeigt nach innen; beim Loslassen schwenkt sie zur Bewegungsrichtung zurück (kein Boost)
 const DRIFT_MIN_SPEED = 12;     // m/s, darunter kein Drift
 const DRIFT_STEER_MIN = 0.2;    // nötige Lenkung zum Start
-const DRIFT_TURN_BASE = 0.6;    // Drehrate der Bewegungsrichtung relativ zum normalen Lenken (neutral)
-const DRIFT_TURN_STEER = 0.3;   // +/- je nach Lenken mit (+) oder gegen (-) die Driftrichtung
-const DRIFT_ANGLE = 0.30;       // rad: um so viel eilt die Nase der Bewegungsrichtung nach innen voraus
-const DRIFT_ANGLE_STEER = 0.12; // +/- je nach Lenken
+const DRIFT_TURN_BASE = 0.5;    // Drehrate der Bewegungsrichtung relativ zum normalen Lenken (neutral)
+const DRIFT_TURN_STEER = 0.2;   // +/- je nach Lenken mit (+) oder gegen (-) die Driftrichtung
+const DRIFT_ANGLE = 0.34;       // rad: um so viel eilt die Nase der Bewegungsrichtung nach innen voraus
+const DRIFT_ANGLE_STEER = 0.10; // +/- je nach Lenken
 const DRIFT_HEADING_FOLLOW = 7;  // 1/s: wie schnell die Nase ihren Winkel einnimmt
+const DRIFT_RAMP = 1.0;         // s: so lange dauert der Übergang vom normalen Lenken in den vollen Drift (weicher Einstieg)
 const DRIFT_SPEED_LOSS = 0.1;   // 1/s: leichter Tempoverlust im Drift
 const EXIT_ALIGN = 9;           // 1/s: Nase schwenkt nach dem Drift zur Bewegungsrichtung
 const EXIT_TIME = 0.5;          // s
@@ -65,6 +66,7 @@ export class Car {
   private travel = 0;     // Bewegungsrichtung im Drift (rad)
   private exitT = 0;      // Restzeit, in der die Nase nach dem Drift zur Bewegungsrichtung schwenkt
   private hopT = 0;
+  private driftT = 0;     // Zeit seit Driftstart (für den weichen Einstieg)
   private body: THREE.Group;
   private lastIndex: number | undefined;
 
@@ -89,6 +91,7 @@ export class Car {
     this.driftDir = 0;
     this.exitT = 0;
     this.hopT = 0;
+    this.driftT = 0;
     this.lastIndex = undefined; // volle Suche nach dem Teleport
     this.syncMesh(0);
   }
@@ -127,6 +130,7 @@ export class Car {
         this.driftDir = Math.sign(this.steer);
         this.travel = Math.atan2(this.vx, this.vz);
         this.hopT = HOP_TIME;
+        this.driftT = 0;
         this.exitT = 0;
       }
     } else if (!can) {
@@ -147,12 +151,18 @@ export class Car {
     if (this.offTrack) s *= Math.exp(-OFFTRACK_DRAG * dt);
     s = Math.max(s, 0);
 
-    const along = this.steer * this.driftDir; // -1 gegen, +1 mit der Driftrichtung
-    const turn = STEER_RATE * turnFactor(s) * (DRIFT_TURN_BASE + DRIFT_TURN_STEER * along) * DRIFT_TURN_SCALE;
-    this.travel += this.driftDir * turn * dt;
+    // Weicher Einstieg: Der Bogen geht stetig aus dem normalen Lenken hervor, die Nase schwingt allmählich nach innen
+    this.driftT += dt;
+    const k = Math.min(this.driftT / DRIFT_RAMP, 1);
+    const blend = k * k * (3 - 2 * k); // 0 -> 1 (smoothstep)
 
-    const noseTarget = this.travel + this.driftDir * (DRIFT_ANGLE + DRIFT_ANGLE_STEER * along) * DRIFT_NOSE_SCALE;
-    this.heading += wrapAngle(noseTarget - this.heading) * (1 - Math.exp(-DRIFT_HEADING_FOLLOW * dt));
+    const along = this.steer * this.driftDir; // -1 gegen, +1 mit der Driftrichtung
+    const normalTurn = this.steer * STEER_RATE * turnFactor(s); // Drehrate wie beim normalen Lenken (vorzeichenbehaftet)
+    const driftTurn = this.driftDir * STEER_RATE * turnFactor(s) * (DRIFT_TURN_BASE + DRIFT_TURN_STEER * along) * DRIFT_TURN_SCALE;
+    this.travel += (normalTurn + (driftTurn - normalTurn) * blend) * dt;
+
+    const lead = this.driftDir * (DRIFT_ANGLE + DRIFT_ANGLE_STEER * along) * DRIFT_NOSE_SCALE * blend;
+    this.heading += wrapAngle(this.travel + lead - this.heading) * (1 - Math.exp(-DRIFT_HEADING_FOLLOW * dt));
 
     this.vx = s * Math.sin(this.travel);
     this.vz = s * Math.cos(this.travel);
